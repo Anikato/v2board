@@ -11,6 +11,7 @@ use App\Models\Plan;
 use App\Models\Order;
 use App\Services\TelegramService;
 use App\Services\TicketService;
+use App\Services\BarkService;
 use App\Models\Ticket;
 use App\Models\TicketMessage;
 use App\Utils\Dict;
@@ -94,6 +95,10 @@ class TicketController extends Controller
 
             DB::commit();
             $this->sendNotify($ticket, $request->input('message'),$request->user['id']);
+            
+            // 发送 Bark 通知
+            BarkService::sendTicketCreatedNotification($ticket);
+            
             return response([
                 'data' => true
             ]);
@@ -134,6 +139,13 @@ class TicketController extends Controller
             abort(500, __('Ticket reply failed'));
         }
         $this->sendNotify($ticket, $request->input('message'), $request->user['id']);
+        
+        // 发送 Bark 通知 - 获取最新的回复消息
+        $latestMessage = $this->getLastMessage($ticket->id);
+        if ($latestMessage) {
+            BarkService::sendTicketRepliedNotification($ticket, $latestMessage);
+        }
+        
         return response([
             'data' => true
         ]);
