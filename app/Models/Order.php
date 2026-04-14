@@ -14,4 +14,12 @@ class Order extends Model
         'updated_at' => 'timestamp',
         'surplus_order_ids' => 'array'
     ];
+
+    /**
+     * 订单所属用户
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 }

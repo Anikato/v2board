@@ -22,6 +22,7 @@ class BarkService
 
         // 如果未配置 Bark，直接返回 true（不影响主流程）
         if (empty($barkUrl) || empty($barkKey)) {
+            Log::debug('Bark: Not configured, skipping notification');
             return true;
         }
 
@@ -55,26 +56,36 @@ class BarkService
                 $params['level'] = $options['level'];
             }
 
+            Log::info('Bark: Sending notification', [
+                'url' => $url,
+                'title' => $title,
+                'params' => $params
+            ]);
+
             // 发送 POST 请求
             $response = Http::timeout(5)->post($url, $params);
 
             if ($response->successful()) {
                 Log::info('Bark notification sent successfully', [
                     'title' => $title,
-                    'body' => $body
+                    'body' => $body,
+                    'response' => $response->json()
                 ]);
                 return true;
             } else {
                 Log::warning('Bark notification failed', [
                     'status' => $response->status(),
-                    'response' => $response->body()
+                    'response' => $response->body(),
+                    'title' => $title
                 ]);
                 return false;
             }
         } catch (\Exception $e) {
             Log::error('Bark notification error: ' . $e->getMessage(), [
                 'title' => $title,
-                'body' => $body
+                'body' => $body,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
             return false;
         }
@@ -88,25 +99,57 @@ class BarkService
      */
     public static function sendNewOrderNotification($order): bool
     {
-        $user = $order->user;
-        $plan = \App\Models\Plan::find($order->plan_id);
+        try {
+            // 确保加载关联数据
+            if (!$order->relationLoaded('user')) {
+                $order->load('user');
+            }
+            
+            $user = $order->user;
+            if (!$user) {
+                Log::warning('Bark: Order user not found', ['order_id' => $order->id]);
+                return false;
+            }
+            
+            $plan = \App\Models\Plan::find($order->plan_id);
+            if (!$plan) {
+                Log::warning('Bark: Order plan not found', [
+                    'order_id' => $order->id,
+                    'plan_id' => $order->plan_id
+                ]);
+                // 即使没有套餐信息，也尝试发送通知
+            }
 
-        $title = '💰 新订单提醒';
-        $body = sprintf(
-            "用户: %s\n套餐: %s\n金额: ¥%.2f\n订单号: %s",
-            $user->email ?? 'Unknown',
-            $plan->name ?? 'Unknown',
-            $order->total_amount / 100,
-            $order->trade_no
-        );
+            $title = '💰 新订单提醒';
+            $body = sprintf(
+                "用户: %s\n套餐: %s\n金额: ¥%.2f\n订单号: %s",
+                $user->email ?? 'Unknown',
+                $plan->name ?? 'Unknown',
+                $order->total_amount / 100,
+                $order->trade_no
+            );
 
-        $options = [
-            'group' => 'V2Board订单',
-            'sound' => 'bell',
-            'url' => config('app.url') . '/admin/order/' . $order->id,
-        ];
+            $options = [
+                'group' => 'V2Board订单',
+                'sound' => 'bell',
+                'url' => config('app.url') . '/admin/order/' . $order->id,
+            ];
 
-        return self::send($title, $body, $options);
+            Log::info('Bark: Sending new order notification', [
+                'order_id' => $order->id,
+                'user_id' => $user->id,
+                'plan_id' => $order->plan_id
+            ]);
+
+            return self::send($title, $body, $options);
+        } catch (\Exception $e) {
+            Log::error('Bark: sendNewOrderNotification failed', [
+                'order_id' => $order->id ?? 'unknown',
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return false;
+        }
     }
 
     /**
@@ -117,25 +160,56 @@ class BarkService
      */
     public static function sendOrderPaidNotification($order): bool
     {
-        $user = $order->user;
-        $plan = \App\Models\Plan::find($order->plan_id);
+        try {
+            // 确保加载关联数据
+            if (!$order->relationLoaded('user')) {
+                $order->load('user');
+            }
+            
+            $user = $order->user;
+            if (!$user) {
+                Log::warning('Bark: Order user not found for paid notification', ['order_id' => $order->id]);
+                return false;
+            }
+            
+            $plan = \App\Models\Plan::find($order->plan_id);
+            if (!$plan) {
+                Log::warning('Bark: Order plan not found for paid notification', [
+                    'order_id' => $order->id,
+                    'plan_id' => $order->plan_id
+                ]);
+            }
 
-        $title = '✅ 订单支付成功';
-        $body = sprintf(
-            "用户: %s\n套餐: %s\n金额: ¥%.2f\n支付时间: %s",
-            $user->email ?? 'Unknown',
-            $plan->name ?? 'Unknown',
-            $order->total_amount / 100,
-            date('Y-m-d H:i:s', $order->paid_at)
-        );
+            $title = '✅ 订单支付成功';
+            $body = sprintf(
+                "用户: %s\n套餐: %s\n金额: ¥%.2f\n支付时间: %s",
+                $user->email ?? 'Unknown',
+                $plan->name ?? 'Unknown',
+                $order->total_amount / 100,
+                date('Y-m-d H:i:s', $order->paid_at)
+            );
 
-        $options = [
-            'group' => 'V2Board订单',
-            'sound' => 'payment',
-            'level' => 'timeSensitive',
-            'url' => config('app.url') . '/admin/order/' . $order->id,
-        ];
+            $options = [
+                'group' => 'V2Board订单',
+                'sound' => 'payment',
+                'level' => 'timeSensitive',
+                'url' => config('app.url') . '/admin/order/' . $order->id,
+            ];
 
-        return self::send($title, $body, $options);
+            Log::info('Bark: Sending order paid notification', [
+                'order_id' => $order->id,
+                'user_id' => $user->id,
+                'plan_id' => $order->plan_id
+            ]);
+
+            return self::send($title, $body, $options);
+        } catch (\Exception $e) {
+            Log::error('Bark: sendOrderPaidNotification failed', [
+                'order_id' => $order->id ?? 'unknown',
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return false;
+        }
     }
 }
