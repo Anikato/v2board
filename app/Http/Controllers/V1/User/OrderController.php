@@ -199,6 +199,9 @@ class OrderController extends Controller
 
         DB::commit();
 
+        // 发送新订单 Bark 通知
+        \App\Services\BarkService::sendNewOrderNotification($order);
+
         return response([
             'data' => $order->trade_no
         ]);

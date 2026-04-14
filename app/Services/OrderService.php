@@ -264,6 +264,8 @@ class OrderService
         if (!$order->save()) return false;
         try {
             OrderHandleJob::dispatch($order->trade_no);
+            // 发送 Bark 通知
+            BarkService::sendOrderPaidNotification($order);
         } catch (\Exception $e) {
             return false;
         }
