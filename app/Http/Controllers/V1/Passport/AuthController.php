@@ -118,6 +118,9 @@ class AuthController extends Controller
         $user->last_login_at = time();
         $user->save();
 
+        // 发送用户注册通知
+        \App\Services\BarkService::sendUserRegisteredNotification($user);
+
         if ((int)config('v2board.register_limit_by_ip_enable', 0)) {
             Cache::put(
                 CacheKey::get('REGISTER_IP_RATE_LIMIT', $request->ip()),

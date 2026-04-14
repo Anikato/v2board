@@ -99,6 +99,9 @@ class OrderService
         }
 
         DB::commit();
+        
+        // 发送订单完成通知
+        BarkService::sendOrderCompletedNotification($order);
     }
 
 
@@ -289,6 +292,10 @@ class OrderService
             }
         }
         DB::commit();
+        
+        // 发送订单取消通知
+        BarkService::sendOrderCancelledNotification($order);
+        
         return true;
     }
 
