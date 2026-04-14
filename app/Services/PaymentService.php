@@ -38,8 +38,12 @@ class PaymentService
 
     public function pay($order)
     {
+        // 优先使用 v2board 配置的 app_url，如果没有则使用 Laravel 的 APP_URL
+        $baseUrl = config('v2board.app_url') ?: config('app.url');
+        $baseUrl = rtrim($baseUrl, '/'); // 移除末尾的斜杠
+        
         // custom notify domain name
-        $notifyUrl = url("/api/v1/guest/payment/notify/{$this->method}/{$this->config['uuid']}");
+        $notifyUrl = $baseUrl . "/api/v1/guest/payment/notify/{$this->method}/{$this->config['uuid']}";
         if ($this->config['notify_domain']) {
             $parseUrl = parse_url($notifyUrl);
             $notifyUrl = $this->config['notify_domain'] . $parseUrl['path'];
@@ -47,7 +51,7 @@ class PaymentService
 
         return $this->payment->pay([
             'notify_url' => $notifyUrl,
-            'return_url' => url('/#/order/' . $order['trade_no']),
+            'return_url' => $baseUrl . '/#/order/' . $order['trade_no'],
             'trade_no' => $order['trade_no'],
             'total_amount' => $order['total_amount'],
             'user_id' => $order['user_id'],
