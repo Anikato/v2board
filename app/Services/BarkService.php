@@ -17,12 +17,15 @@ class BarkService
      */
     public static function send(string $title, string $body = '', array $options = []): bool
     {
-        $barkUrl = env('BARK_URL');
-        $barkKey = env('BARK_KEY');
+        $barkUrl = config('bark.url');
+        $barkKey = config('bark.key');
 
         // 如果未配置 Bark，直接返回 true（不影响主流程）
         if (empty($barkUrl) || empty($barkKey)) {
-            Log::debug('Bark: Not configured, skipping notification');
+            Log::debug('Bark: Not configured, skipping notification', [
+                'bark_url' => $barkUrl,
+                'bark_key_set' => !empty($barkKey)
+            ]);
             return true;
         }
 
