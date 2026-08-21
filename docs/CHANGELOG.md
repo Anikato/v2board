@@ -12,6 +12,20 @@
 
 ---
 
+## [未发布] - 2026-08-21
+
+### 修改
+
+#### v2node 一键安装改用 Anikato/v2node
+
+后台复制的安装命令改为拉取 `https://github.com/Anikato/v2node`（含节点 `SpeedLimit`），不再装上游 `wyx2685/v2node`。
+
+**修改文件：** `app/Services/ServerService.php`（`LOCAL:` 注释）
+
+生产面板需部署本提交后，后台复制命令才会变。节点机要能访问 GitHub。
+
+---
+
 ## [未发布] - 2026-04-14
 
 ### 新增功能
