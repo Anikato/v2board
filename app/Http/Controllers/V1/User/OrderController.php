@@ -240,7 +240,9 @@ class OrderController extends Controller
             'trade_no' => $tradeNo,
             'total_amount' => isset($order->handling_amount) ? ($order->total_amount + $order->handling_amount) : $order->total_amount,
             'user_id' => $order->user_id,
-            'stripe_token' => $request->input('token')
+            'stripe_token' => $request->input('token'),
+            // LOCAL: optional, used by x-user so EPay return_url goes back to that frontend.
+            'return_url' => $request->input('return_url'),
         ]);
         return response([
             'type' => $result['type'],

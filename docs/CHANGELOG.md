@@ -12,6 +12,22 @@
 
 ---
 
+## [未发布] - 2026-09-20
+
+### 合并上游
+
+合入 `upstream/master`（`3cfb3f0d`..`99f8526e`，版本 `1.7.5.2685.2222` → `1.7.5.2685.2333`）。
+
+**吃进：** 订阅 `pcs`（`pinned_peer_cert_sha256`）、前后端分离回跳、XFF 栏与支付默认选项修复、后台 `umi.js`。
+
+**支付插件：** 上游删除 `MGate`，新增 `Paytaro` / `PaytaroQR` / `EPayQrcode`（本 fork 不使用）。继续用 `EPay_Alipay`、`Epaywx`。
+
+**冲突：** 仅 `app/Services/PaymentService.php`。保留本地 `app_url` 子路径 `notify_url`；默认 `return_url` 用带路径的 `app_url`；Origin 与 `app_url` 不同主机时改走上游 `currentBase()`；x-user 可传 `return_url`（`OrderController`）。
+
+**未改：** Bark、`Anikato/v2node` 一键安装。
+
+---
+
 ## [未发布] - 2026-08-21
 
 ### 修改
