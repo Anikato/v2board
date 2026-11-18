@@ -14,14 +14,20 @@ use Illuminate\Http\Request;
 |
 */
 
-Route::get('/v2node/v0.4.5/install.sh', function () {
-    $script = public_path('v2node/v0.4.5/install.sh');
-    abort_unless(is_readable($script), 404);
+$v2boardInstallers = [
+    'v0.4.5' => 'v2node.compat.legacy',
+    'v0.4.7.anikato.v2board.1' => 'v2node.compat.install',
+];
+foreach ($v2boardInstallers as $release => $routeName) {
+    Route::get("/v2node/{$release}/install.sh", function () use ($release) {
+        $script = public_path("v2node/{$release}/install.sh");
+        abort_unless(is_readable($script), 404);
 
-    return response(file_get_contents($script), 200, [
-        'Content-Type' => 'text/plain; charset=UTF-8',
-    ]);
-})->name('v2node.compat.install');
+        return response(file_get_contents($script), 200, [
+            'Content-Type' => 'text/plain; charset=UTF-8',
+        ]);
+    })->name($routeName);
+}
 
 Route::get('/', function (Request $request) {
     if (config('v2board.app_url') && config('v2board.safe_mode_enable', 0)) {
