@@ -15,7 +15,10 @@ use Illuminate\Http\Request;
 */
 
 Route::get('/v2node/v0.4.5/install.sh', function () {
-    return response()->file(public_path('v2node/v0.4.5/install.sh'), [
+    $script = public_path('v2node/v0.4.5/install.sh');
+    abort_unless(is_readable($script), 404);
+
+    return response(file_get_contents($script), 200, [
         'Content-Type' => 'text/plain; charset=UTF-8',
     ]);
 })->name('v2node.compat.install');
