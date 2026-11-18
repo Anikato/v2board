@@ -167,7 +167,7 @@ install_release() {
     stage=$(mktemp -d "$bin_dir/.v2board-release.XXXXXXXX")
     trap 'rm -rf -- "$stage"' EXIT
     curl -fLSs --retry 2 "https://github.com/Anikato/v2node/releases/download/$version/$asset" -o "$stage/$asset"
-    printf '%s  %s\n' "$sha" "$stage/$asset" | sha256sum -c -s || fail '兼容安装包 SHA-256 不匹配。'
+    printf '%s  %s\n' "$sha" "$stage/$asset" | sha256sum -c >/dev/null || fail '兼容安装包 SHA-256 不匹配。'
     unzip -q "$stage/$asset" v2node geoip.dat geosite.dat -d "$stage"
     chmod 755 "$stage/v2node"
 
