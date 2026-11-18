@@ -14,6 +14,12 @@ use Illuminate\Http\Request;
 |
 */
 
+Route::get('/v2node/v0.4.5/install.sh', function () {
+    return response()->file(public_path('v2node/v0.4.5/install.sh'), [
+        'Content-Type' => 'text/plain; charset=UTF-8',
+    ]);
+})->name('v2node.compat.install');
+
 Route::get('/', function (Request $request) {
     if (config('v2board.app_url') && config('v2board.safe_mode_enable', 0)) {
         if ($request->server('HTTP_HOST') !== parse_url(config('v2board.app_url'))['host']) {

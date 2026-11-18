@@ -398,9 +398,11 @@ class ServerService
             $nodeId = (int) $v['id'];
             $apiHostArg = escapeshellarg((string) $apiHost);
             $apiKeyArg = escapeshellarg((string) $apiKey);
-            // LOCAL: one-click install uses Anikato/v2node (SpeedLimit fork), not upstream wyx2685.
+            // The installed manager is the same versioned script and uses the same pinned package.
+            $installUrl = escapeshellarg(route('v2node.compat.install'));
             $servers[$k]['install_command'] = sprintf(
-                'wget -N https://raw.githubusercontent.com/Anikato/v2node/main/script/install.sh && bash install.sh --api-host %s --node-id %d --api-key %s',
+                'wget -O v2board-v2node-install.sh %s && bash v2board-v2node-install.sh --api-host %s --node-id %d --api-key %s',
+                $installUrl,
                 $apiHostArg,
                 $nodeId,
                 $apiKeyArg
